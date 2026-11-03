@@ -1,0 +1,4 @@
+/var/
+/bin/
+*.pem
+*.key
