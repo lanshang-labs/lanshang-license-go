@@ -13,6 +13,8 @@ const Format = "lanshang.lease.v1"
 const RefreshInterval = time.Hour
 const MaxLeaseDuration = 24 * time.Hour
 
+var ErrLeaseExpired = errors.New("signed lease expired")
+
 type Claims struct {
 	Product          string    `json:"product"`
 	OrganizationID   string    `json:"organization_id"`
@@ -68,8 +70,11 @@ func Verify(lease Lease, keys map[string]ed25519.PublicKey, product, instance st
 	if lease.Format != Format || a != nil || b != nil || len(key) != ed25519.PublicKeySize || !ed25519.Verify(key, signingBytes(lease.KeyID, raw), sig) {
 		return c, errors.New("invalid lease signature")
 	}
-	if json.Unmarshal(raw, &c) != nil || c.Product != product || c.InstanceID != instance || c.OrganizationID == "" || c.Organization == "" || c.LicenseID == "" || c.IssuedAt.After(now) || !c.ExpiresAt.After(now) || !c.ExpiresAt.After(c.IssuedAt) || c.ExpiresAt.Sub(c.IssuedAt) > MaxLeaseDuration || c.ExpiresAt.After(c.LicenseExpiresAt) {
+	if json.Unmarshal(raw, &c) != nil || c.Product != product || c.InstanceID != instance || c.OrganizationID == "" || c.Organization == "" || c.LicenseID == "" || c.IssuedAt.After(now) || !c.ExpiresAt.After(c.IssuedAt) || c.ExpiresAt.Sub(c.IssuedAt) > MaxLeaseDuration || c.ExpiresAt.After(c.LicenseExpiresAt) {
 		return Claims{}, errors.New("invalid or expired lease")
+	}
+	if !c.ExpiresAt.After(now) {
+		return Claims{}, ErrLeaseExpired
 	}
 	return c, nil
 }

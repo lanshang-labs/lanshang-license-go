@@ -113,7 +113,10 @@ func (c *Client) status() Status {
 	}
 	claims, err := Verify(*c.cached.Lease, c.cfg.PublicKeys, c.cfg.Product, c.cfg.InstanceID, c.now())
 	if err != nil {
-		out.State = "expired"
+		out.State = "invalid"
+		if errors.Is(err, ErrLeaseExpired) {
+			out.State = "lease_expired"
+		}
 		return out
 	}
 	out.State = "valid"
