@@ -17,6 +17,8 @@ var ErrLeaseExpired = errors.New("signed lease expired")
 
 type Claims struct {
 	Product          string    `json:"product"`
+	ProductName      string    `json:"product_name,omitempty"`
+	Provider         string    `json:"provider,omitempty"`
 	OrganizationID   string    `json:"organization_id"`
 	Organization     string    `json:"organization"`
 	LicenseID        string    `json:"license_id"`
